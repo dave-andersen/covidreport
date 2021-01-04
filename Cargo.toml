@@ -1,0 +1,13 @@
+[package]
+name = "covidreport"
+version = "0.1.0"
+authors = ["dga"]
+edition = "2018"
+
+[dependencies]
+anyhow = "*"
+csv = "*"
+serde = { version="*", features = ["derive"] }
+itertools = "*"
+plotters = "*"
+chrono = { version="*", features = ["serde"] }
