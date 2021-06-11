@@ -68,13 +68,20 @@ mod mdY_date_format {
 fn csvrecs<T>(filename: &str) -> Result<Vec<T>>
 where
     T: serde::de::DeserializeOwned,
+    T: std::fmt::Debug,
 {
     let infile = std::fs::File::open(filename)?;
     let mut rdr = csv::Reader::from_reader(infile);
     Ok(rdr
         .deserialize()
         .filter_map(Option::Some)
-        .map(|o| o.unwrap())
+        //.map(|o| o.unwrap())
+        .filter_map(|o| {
+            if o.is_err() {
+                println!("Error unpacking {:?}", o);
+            }
+            o.ok()
+        })
         .collect())
 }
 
@@ -91,6 +98,19 @@ fn plot_jurisdiction(recs: &[HospitalRecord], jurisdiction: &str) -> Result<()> 
         .map(|x| x.new_cases.unwrap_or(0))
         .max()
         .unwrap_or(1000);
+    let casevec: Vec<u32> = recs
+        .iter()
+        .take(recs.len() - 1)
+        .map(|x| x.new_cases.unwrap_or(0))
+        .collect();
+    let cases7day: Vec<u32> = casevec
+        .windows(7)
+        .map(|w| ((w.iter().sum::<u32>() as f64) / (w.len() as f64)).round() as u32)
+        .collect();
+
+    let dates7day = recs.iter().skip(6).map(|x| x.date).take(cases7day.len());
+    let datecases7day = dates7day.zip(cases7day);
+
     let mut chart = ChartBuilder::on(&root)
         .margin(10)
         .caption(
@@ -111,6 +131,10 @@ fn plot_jurisdiction(recs: &[HospitalRecord], jurisdiction: &str) -> Result<()> 
         ))?
         .label("Daily new cases")
         .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &RED));
+    chart
+        .draw_series(LineSeries::new(datecases7day, &MAGENTA.mix(0.7)))?
+        .label("7 day avg new cases")
+        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &MAGENTA.mix(0.7)));
     chart
         .draw_series(LineSeries::new(
             recs.iter()
@@ -147,6 +171,16 @@ fn printstats(recs: &[HospitalRecord], icunorm: u32, icunormfree: u32) {
         "({:.0}% full).",
         ((((icunorm - icunormfree + newi) * 100) as f32) / (icunorm as f32))
     );
+
+    for step in [0, 1] {
+        let cases_7_day_avg = recs[last - 7 - step..last - step]
+            .iter()
+            .map(|x| x.new_cases.unwrap_or(0) as f32)
+            .sum::<f32>()
+            / 7.0;
+
+        println!("Step{} 7 day avg to {:.2}", step, cases_7_day_avg);
+    }
 }
 
 fn count_cases(filename: &str, jurisdiction: &str) -> Result<u32> {
@@ -186,6 +220,7 @@ fn reportcovid() -> Result<()> {
 
     // This is all inefficient but we're fast enough, so ignore.
     let new_cases_allegheny = count_case_delta(&today, &yesterday, "Allegheny").unwrap();
+    //let new_cases_philadelphia = count_case_delta(&today, &yesterday, "Philadelphia").unwrap();
     let new_cases_state = count_case_delta(&today, &yesterday, "Pennsylvania").unwrap();
 
     let case_records = csvrecs::<CasesRecord>(&cases_file(&today))?;
@@ -211,6 +246,19 @@ fn reportcovid() -> Result<()> {
     println!("County reports {} new cases. ", new_cases_allegheny);
     printstats(&county_records, 560, 180);
 
+    // let philadelphia_records: Vec<HospitalRecord> = all_records
+    //     .iter()
+    //     .filter(|x| x.county == "Philadelphia")
+    //     .sorted_by_key(|x| x.date)
+    //     .cloned()
+    //     .collect();
+
+    // println!(
+    //     "\nPhiladelphia county reports {} new cases. ",
+    //     new_cases_philadelphia
+    // );
+    // printstats(&philadelphia_records, 560, 180);
+
     let state_records: Vec<HospitalRecord> = all_records
         .iter()
         .filter(|x| x.county == "Pennsylvania")
@@ -220,14 +268,18 @@ fn reportcovid() -> Result<()> {
 
     println!("\nState reports {} new cases. ", new_cases_state);
     printstats(&state_records, 4200, 1040);
-    println!("");
+    println!();
 
+    // if let Err(e) = plot_jurisdiction(&philadelphia_records, "Philadelphia County") {
+    //     println!("Error plotting county: {:?}", e);
+    // }
     if let Err(e) = plot_jurisdiction(&county_records, "Allegheny County") {
         println!("Error plotting county: {:?}", e);
     }
     if let Err(e) = plot_jurisdiction(&state_records, "Pennsylvania") {
         println!("Error plotting state: {:?}", e);
     }
+
     //    for r in county_records {
     //println!("L: {:#?}", r);    //}
     Ok(())
