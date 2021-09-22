@@ -11,3 +11,5 @@ serde = { version="*", features = ["derive"] }
 itertools = "*"
 plotters = "*"
 chrono = { version="*", features = ["serde"] }
+structopt = "*"
+palette = "*"
