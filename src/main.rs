@@ -35,10 +35,9 @@ pub struct HospitalRecord {
     new_cases: Option<u32>,
 }
 
-// Importer for WPRDC test results data; source:
-// https://data.wprdc.org/dataset/allegheny-county-covid-19-tests-cases-and-deaths
-// https://data.wprdc.org/dataset/allegheny-county-covid-19-tests-cases-and-deaths/resource/4051a85a-bf92-45fc-adc6-b31eb8efaad4
-
+/// Importer for WPRDC test results data; source:
+/// <https://data.wprdc.org/dataset/allegheny-county-covid-19-tests-cases-and-deaths>
+/// <https://data.wprdc.org/dataset/allegheny-county-covid-19-tests-cases-and-deaths/resource/4051a85a-bf92-45fc-adc6-b31eb8efaad4>
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TestRecord {
     indv_id: String,
