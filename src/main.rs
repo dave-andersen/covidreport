@@ -13,6 +13,9 @@ const CASES_PREFIX: &str = "daily";
 const HOSP_PREFIX: &str = "today";
 const TESTS_DIR: &str = "/home/dga/testday";
 
+/// Importer for [OpendataPA hospitalization data](https://data.pa.gov/Covid-19/COVID-19-Aggregate-Hospitalizations-Current-Daily-/kayn-sjhx)
+///
+/// Requires the [raw data in CSV format](https://data.pa.gov/api/views/kayn-sjhx/rows.csv?accessType=DOWNLOAD)
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct HospitalRecord {
     #[serde(rename = "County")]
@@ -35,9 +38,9 @@ pub struct HospitalRecord {
     new_cases: Option<u32>,
 }
 
-/// Importer for WPRDC test results data; source:
-/// <https://data.wprdc.org/dataset/allegheny-county-covid-19-tests-cases-and-deaths>
-/// <https://data.wprdc.org/dataset/allegheny-county-covid-19-tests-cases-and-deaths/resource/4051a85a-bf92-45fc-adc6-b31eb8efaad4>
+/// Importer for [WPRDC test results data](https://data.wprdc.org/dataset/allegheny-county-covid-19-tests-cases-and-deaths)
+///
+/// Requires the [raw data in CSV format](https://data.wprdc.org/dataset/allegheny-county-covid-19-tests-cases-and-deaths/resource/4051a85a-bf92-45fc-adc6-b31eb8efaad4) (warning, this is a 60+MB download)
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TestRecord {
     indv_id: String,
@@ -58,6 +61,10 @@ pub struct TestRecord {
     update_date: chrono::NaiveDate,
 }
 
+/// Importer for
+/// [OpendataPA cases data](https://data.pa.gov/Covid-19/COVID-19-Aggregate-Cases-Current-Daily-County-Heal/j72v-r42c)
+///
+/// Requires the [raw data feed in CSV format](https://data.pa.gov/api/views/j72v-r42c/rows.csv?accessType=DOWNLOAD)
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CasesRecord {
     #[serde(rename = "Jurisdiction")]
