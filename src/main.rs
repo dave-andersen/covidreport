@@ -130,7 +130,6 @@ where
     Ok(rdr
         .deserialize()
         .filter_map(Option::Some)
-        //.map(|o| o.unwrap())
         .filter_map(|o| {
             if o.is_err() {
                 println!("Error unpacking {:?}", o);
@@ -334,8 +333,8 @@ fn reportcovid() -> Result<()> {
     let yesterday = today - chrono::Duration::days(1);
 
     // This is all inefficient but we're fast enough, so ignore.
-    let new_cases_allegheny = count_case_delta(&today, &yesterday, "Allegheny").unwrap();
-    let new_cases_state = count_case_delta(&today, &yesterday, "Pennsylvania").unwrap();
+    let new_cases_allegheny = count_case_delta(&today, &yesterday, "Allegheny")?;
+    let new_cases_state = count_case_delta(&today, &yesterday, "Pennsylvania")?;
 
     let all_records = get_all_records(&today)?;
 
