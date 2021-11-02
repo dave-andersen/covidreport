@@ -1,5 +1,5 @@
 use anyhow::Result;
-use chrono::Datelike;
+use chrono::{Datelike, TimeZone};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use structopt::StructOpt;
@@ -328,9 +328,9 @@ fn analyze(
     println!();
 }
 
-fn reportcovid() -> Result<()> {
-    let today = chrono::Local::now();
-    let yesterday = today - chrono::Duration::days(1);
+fn reportcovid(today: &chrono::DateTime<chrono::Local>) -> Result<()> {
+    let yesterday = *today - chrono::Duration::days(1);
+    println!("Today: {} Yesterday: {}", today, yesterday);
 
     // This is all inefficient but we're fast enough, so ignore.
     let new_cases_allegheny = count_case_delta(&today, &yesterday, "Allegheny")?;
@@ -433,6 +433,8 @@ struct Opt {
     dayreport: bool,
     #[structopt(short, long)]
     agereport: bool,
+    #[structopt(long, help = "Analyze for specified date (%Y-%m-%d format)")]
+    date: Option<String>,
 }
 
 fn get_all_testday_records(day: &chrono::DateTime<chrono::Local>) -> Result<Vec<TestRecord>> {
@@ -510,9 +512,8 @@ fn plot_ages(recs: &[TestRecord]) -> Result<()> {
     Ok(())
 }
 
-fn agereport() -> Result<()> {
+fn agereport(today: &chrono::DateTime<chrono::Local>) -> Result<()> {
     println!("Calculating age report!");
-    let today = chrono::Local::now();
     let mut all_records: Vec<TestRecord> = get_all_testday_records(&today)?
         .iter()
         .filter(|x| x.report_date >= chrono::NaiveDate::from_ymd(2021, 1, 1))
@@ -524,8 +525,15 @@ fn agereport() -> Result<()> {
 
 fn main() {
     let opt = Opt::from_args();
+    let today = if let Some(datestr) = opt.date {
+        let n = chrono::NaiveDate::parse_from_str(&datestr, "%Y-%m-%d").unwrap();
+        let n = n.and_time(chrono::NaiveTime::from_hms_milli(12, 34, 56, 789));
+        chrono::Local.from_local_datetime(&n).unwrap()
+    } else {
+        chrono::Local::now()
+    };
     if opt.agereport {
-        if let Err(e) = agereport() {
+        if let Err(e) = agereport(&today) {
             println!("Error creating agereport: {}", e);
         }
         return;
@@ -536,7 +544,7 @@ fn main() {
         };
         return;
     }
-    let res = reportcovid();
+    let res = reportcovid(&today);
     println!("Res: {:#?}", res);
-    let _res = agereport();
+    let _res = agereport(&today);
 }
