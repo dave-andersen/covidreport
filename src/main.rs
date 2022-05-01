@@ -189,7 +189,7 @@ fn plot_jurisdiction(recs: &[HospitalRecord], jurisdiction: &str, is_60d: bool, 
         .unwrap_or(1000);
     max_y += max_y / 20;
     if y_truncate {
-        max_y = max_y / 4;
+        max_y /= 4;
     }
     let casevec: Vec<u32> = recs
         .iter()
@@ -269,7 +269,7 @@ fn printstats(recs: &[HospitalRecord], icunorm: u32, icunormfree: u32, populatio
         .unwrap_or_else(|| recs[last - 2].covid_hospitalized.unwrap()) as i32;
     let hd = newh as i32 - prev as i32;
     //let hd = newh as i32 - recs[last - 1].covid_hospitalized.unwrap() as i32;
-    println!("Hospitalizations are {:+} to {}  ", hd, newh);
+    println!("Hospitalizations are {:+} to {newh}  ", hd);
     let newi = recs[last].covid_icu.unwrap();
     let previ = recs[last - 1]
         .covid_icu
@@ -379,7 +379,7 @@ fn analyze(
         .collect();
 
     if let Some(new_cases) = new_cases {
-        println!("{} reports {} new cases.  ", jurisdiction, new_cases);
+        println!("{jurisdiction} reports {new_cases} new cases.  ");
     }
     let (icunorm, icunormfree) = if jurisdiction == "Pennsylvania" {
         (4200, 1040)
@@ -409,9 +409,7 @@ fn cleanup<I: Iterator<Item = Option<u32>>>(vals: I) -> Vec<u32> {
         match v[i] {
             Some(x) => result.push(x),
             None => {
-                if i == 0 {
-                    result.push(0);
-                } else if i == v.len() - 1 {
+                if i == 0 || i == (v.len() - 1) {
                     result.push(0);
                 } else {
                     result.push((v[i - 1].unwrap_or(0) + v[i + 1].unwrap_or(0)) / 2);
@@ -426,13 +424,13 @@ fn reportcovid(today: &chrono::DateTime<chrono::Local>) -> Result<()> {
     let yesterday = *today - chrono::Duration::days(1);
 
     // This is all inefficient but we're fast enough, so ignore.
-    let new_cases_allegheny = count_case_delta(&today, &yesterday, "Allegheny")?;
-    let new_cases_state = count_case_delta(&today, &yesterday, "Pennsylvania")?;
+    let new_cases_allegheny = count_case_delta(today, &yesterday, "Allegheny")?;
+    let new_cases_state = count_case_delta(today, &yesterday, "Pennsylvania")?;
     let extra_county = "Philadelphia";
     let extra_county_name = "Philadelphia County";
-    let new_cases_philly = count_case_delta(&today, &yesterday, extra_county)?;
+    let new_cases_philly = count_case_delta(today, &yesterday, extra_county)?;
 
-    let all_records = get_all_records(&today)?;
+    let all_records = get_all_records(today)?;
 
     println!();
     println!("## Allegheny County");
@@ -464,7 +462,7 @@ fn reportcovid(today: &chrono::DateTime<chrono::Local>) -> Result<()> {
         Some(1585480),
     );
 
-    let _res = testreport(&today);
+    let _res = testreport(today);
     println!();
 
     println!("## Vaccinations");
@@ -528,7 +526,7 @@ fn cmpname(o: std::cmp::Ordering) -> &'static str {
     }
 }
 
-fn hospitalizations(all_records: &Vec<HospitalRecord>) {
+fn hospitalizations(all_records: &[HospitalRecord]) {
     let mut pa_records = all_records
         .iter()
         .filter(|x| x.county == "Pennsylvania")
@@ -676,7 +674,7 @@ fn plot_ages(recs: &[TestRecord], truncate: bool) -> Result<()> {
 
 fn agereport(today: &chrono::DateTime<chrono::Local>) -> Result<()> {
     println!("Calculating age report!");
-    let mut all_records: Vec<TestRecord> = get_all_testday_records(&today)?
+    let mut all_records: Vec<TestRecord> = get_all_testday_records(today)?
         .iter()
         .filter(|x| x.report_date >= chrono::NaiveDate::from_ymd(2021, 1, 1))
         .cloned()
@@ -733,7 +731,9 @@ fn main() {
         return;
     }
     let todaystr = today.format("%Y-%m-%d");
-    println!("+++\ntitle = \"{}\"\n+++\n", todaystr);
+    println!("+++\ntitle = \"{todaystr}\"");
+    println!("date = {todaystr}");
+    println!("+++\n");
     println!("# Allegheny County & Pennsylvania #covid hospitalization & variants thread for {}\n", todaystr);
     let res = reportcovid(&today);
     println!("Res: {:#?}", res);
