@@ -90,8 +90,8 @@ mod mdY_date_format {
     where
         S: Serializer,
     {
-        let s = format!("{}", nd.format(FORMAT));
-        serializer.serialize_str(&s)
+        let s = nd.format(FORMAT);
+        serializer.serialize_str(&s.to_string())
     }
 
     pub fn deserialize<'de, D>(deserializer: D) -> Result<chrono::NaiveDate, D::Error>
@@ -112,8 +112,8 @@ mod Ymd_dash_date_format {
     where
         S: Serializer,
     {
-        let s = format!("{}", nd.format(FORMAT));
-        serializer.serialize_str(&s)
+        let s = nd.format(FORMAT);
+        serializer.serialize_str(&s.to_string())
     }
 
     pub fn deserialize<'de, D>(deserializer: D) -> Result<chrono::NaiveDate, D::Error>
@@ -208,7 +208,7 @@ fn plot_jurisdiction(recs: &[HospitalRecord], jurisdiction: &str, is_60d: bool, 
     let mut chart = ChartBuilder::on(&root)
         .margin(10)
         .caption(
-            format!("Cases and hospitalizations: {}", jurisdiction),
+            format!("Cases and hospitalizations: {jurisdiction}"),
             ("sans-serif", 40),
         )
         .set_label_area_size(LabelAreaPosition::Left, 60)
@@ -421,7 +421,7 @@ fn cleanup<I: Iterator<Item = Option<u32>>>(vals: I) -> Vec<u32> {
 }
 
 fn reportcovid(today: &chrono::DateTime<chrono::Local>) -> Result<()> {
-    let yesterday = *today - chrono::Duration::days(1);
+    let yesterday = *today - chrono::Duration::days(7); // now last week
 
     // This is all inefficient but we're fast enough, so ignore.
     let new_cases_allegheny = count_case_delta(today, &yesterday, "Allegheny")?;
@@ -466,7 +466,7 @@ fn reportcovid(today: &chrono::DateTime<chrono::Local>) -> Result<()> {
     println!();
 
     println!("## Vaccinations");
-    println!("Alleghey County daily vaccines move to X 1st+2nd doses, Y booster doses/day (5 day lagged 7 day avg)\n");
+    println!("Allegheny County daily vaccines move to X 1st+2nd doses, Y booster doses/day (5 day lagged 7 day avg)\n");
     println!("Fully vaccinated %s:\n");
     println!("Allegheny County: X%, Y% of those are boosted, Z% of boosted got 4th dose.");
     println!();
